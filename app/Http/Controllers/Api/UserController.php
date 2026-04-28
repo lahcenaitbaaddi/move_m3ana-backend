@@ -12,11 +12,23 @@ use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
     /**
+     * Vérifie si l'utilisateur est admin
+     */
+    private function isAdmin(): bool
+    {
+        return auth()->check() && auth()->user()->role === 'admin';
+    }
+
+    /**
      * GET /api/users
      * Liste de tous les utilisateurs (admin uniquement).
      */
     public function index(): JsonResponse
     {
+        if (!$this->isAdmin()) {
+            return $this->forbidden();
+        }
+
         $users = User::paginate(15);
 
         return response()->json([
@@ -33,11 +45,15 @@ class UserController extends Controller
 
     /**
      * GET /api/users/{id}
-     * Détail d'un utilisateur.
+     * Voir un utilisateur (admin ou lui-même).
      */
     public function show(string $id): JsonResponse
     {
         $user = User::findOrFail($id);
+
+        if (auth()->id() != $id && !$this->isAdmin()) {
+            return $this->forbidden();
+        }
 
         return response()->json([
             'success' => true,
@@ -51,13 +67,18 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
-        $user = User::findOrFail($id);
+        if (!$this->isAdmin()) {
+            return $this->forbidden();
+        }
 
+        $user = User::findOrFail($id);
         $data = $request->validated();
 
-        // Gestion de l'upload d'avatar
+        // 🔐 empêcher modification du role par erreur
+        unset($data['role']);
+
+        // Gestion avatar
         if ($request->hasFile('avatar')) {
-            // Supprimer l'ancien avatar
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
             }
@@ -79,9 +100,12 @@ class UserController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
+        if (!$this->isAdmin()) {
+            return $this->forbidden();
+        }
+
         $user = User::findOrFail($id);
 
-        // Supprimer l'avatar si existant
         if ($user->avatar) {
             Storage::disk('public')->delete($user->avatar);
         }
@@ -103,7 +127,9 @@ class UserController extends Controller
         $user = auth()->user();
         $data = $request->validated();
 
-        // Gestion de l'upload d'avatar
+        // 🔐 empêcher modification du role
+        unset($data['role']);
+
         if ($request->hasFile('avatar')) {
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
@@ -118,5 +144,16 @@ class UserController extends Controller
             'message' => 'Profil mis à jour avec succès.',
             'data'    => new UserResource($user->fresh()),
         ]);
+    }
+
+    /**
+     * Réponse standard pour accès interdit
+     */
+    private function forbidden(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Accès non autorisé.',
+        ], 403);
     }
 }

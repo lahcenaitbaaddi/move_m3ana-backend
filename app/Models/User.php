@@ -91,6 +91,22 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    /**
+     * Les activités créées par l'utilisateur.
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Les promotions de l'utilisateur.
+     */
+    public function promotions()
+    {
+        return $this->hasMany(Promotion::class);
+    }
+
     // ─── Scopes ──────────────────────────────────────────────
 
     /**

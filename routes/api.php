@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ClubController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\ReviewController;
@@ -102,6 +104,25 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::prefix('search')->group(function () {
         Route::get('clubs', [SearchController::class, 'clubs']);
         Route::get('events', [SearchController::class, 'events']);
+    });
+
+    // ─── 11. Activités ───────────────────────────────────────────────
+    Route::get('activities/club/{clubId}', [ActivityController::class, 'byClub']);
+    Route::get('activities/sport/{sport}', [ActivityController::class, 'bySport']);
+    Route::get('activities/city/{city}', [ActivityController::class, 'byCity']);
+    Route::get('activities', [ActivityController::class, 'index']);
+    Route::post('activities', [ActivityController::class, 'store']);
+    Route::get('activities/{id}', [ActivityController::class, 'show']);
+    Route::put('activities/{id}', [ActivityController::class, 'update']);
+    Route::delete('activities/{id}', [ActivityController::class, 'destroy']);
+
+    // ─── 12. Promotions ──────────────────────────────────────────────
+    Route::prefix('promotions')->group(function () {
+        Route::post('/', [PromotionController::class, 'store']);
+        Route::get('/', [PromotionController::class, 'index']);
+        Route::get('/{id}', [PromotionController::class, 'show']);
+        Route::put('/{id}/boost', [PromotionController::class, 'boost']);
+        Route::put('/{id}/cancel', [PromotionController::class, 'cancel']);
     });
 });
 
