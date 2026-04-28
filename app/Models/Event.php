@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasPromotions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
-    use HasFactory;
+    use HasFactory, HasPromotions;
 
     /**
      * The attributes that are mass assignable.
